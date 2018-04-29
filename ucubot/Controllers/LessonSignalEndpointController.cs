@@ -1,4 +1,4 @@
-using System;
+﻿ng System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -34,7 +34,7 @@ namespace ucubot.Controllers
                     Console.WriteLine(e.ToString());
                 }
 
-                var adapter = new MySqlDataAdapter("SELECT * FROM lesson_signal", connection);
+                var adapter = new MySqlDataAdapter("SELECT * FROM lesson_signal LEFT JOIN student ON lesson_signal.student_id = student.user_id", connection);
                 
                 var dataTable = new DataTable();
                 
@@ -67,7 +67,7 @@ namespace ucubot.Controllers
                     Console.WriteLine(e.ToString());
                 }
                 
-                var command = new MySqlCommand("SELECT * FROM lesson_signal WHERE id = @id", connection);
+                var command = new MySqlCommand("SELECT * FROM lesson_signal LEFT JOIN student ON lesson_signal.student_id = student.user_id AND id = @id", connection);
                 command.Parameters.AddWithValue("id", id);
                 var adapter = new MySqlDataAdapter(command);
                 
@@ -106,16 +106,20 @@ namespace ucubot.Controllers
                 }
                 
                 var command = connection.CreateCommand();
+                var cnt = connection.CreateCommand();
+                cnt.CommandText = "COUNT(*) FROM student WHERE user_id=" + userId + ";";
+                if(cnt.ExecuteNonQuery()==0){
+                    return BadRequest();
+                }
                 command.CommandText =
-                    "INSERT INTO lesson_signal (user_id, signal_type) VALUES (@userId, @signalType);";
+                    "INSERT INTO lesson_signal (student_id, signal_type) VALUES (@studentId, @signalType);";
                 command.Parameters.AddRange(new[]
                 {
-                    new MySqlParameter("userId", userId),
+                    new MySqlParameter("studentId", userId),
                     new MySqlParameter("signalType", signalType)
                 });
                 command.ExecuteNonQuery();
             }
-            
             return Accepted();
         }
         
