@@ -1,12 +1,14 @@
-﻿ng System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
 using ucubot.Model;
+using Dapper;
 
 namespace ucubot.Controllers
 {
@@ -24,7 +26,6 @@ namespace ucubot.Controllers
         public IEnumerable<LessonSignalDto> ShowSignals()
         {
             var connectionString = _configuration.GetConnectionString("BotDatabase");
-            var lsdList = new List<LessonSignalDto>();
             
             using (var connection = new MySqlConnection(connectionString)){
                 try{
@@ -33,26 +34,14 @@ namespace ucubot.Controllers
                 catch(Exception e){
                     Console.WriteLine(e.ToString());
                 }
-
-                var adapter = new MySqlDataAdapter("SELECT * FROM lesson_signal LEFT JOIN student ON lesson_signal.student_id = student.user_id", connection);
                 
-                var dataTable = new DataTable();
-                
-                adapter.Fill(dataTable);
+                string query = "SELECT lesson_signal.id as Id, lesson_signal.time_stamp as Timestamp, " +
+                               "lesson_signal.signal_type as Type, Student.user_id as UserId " +
+                               "FROM lesson_signal LEFT JOIN Student ON lesson_signal.student_id = Student.id;";
 
-                foreach (DataRow row in dataTable.Rows)
-                {
-                    var sgnl = new LessonSignalDto
-                    {
-                        Id = (int) row["id"],
-                        Type = (LessonSignalType) row["signal_type"],
-                        UserId = (string) row["user_id"]
-                    };
-                    lsdList.Add(sgnl);
-                }               
+                var lsnSign = connection.Query<LessonSignalDto>(query).ToList();
+                return lsnSign;
             }
-
-            return lsdList;
         }
         
         [HttpGet("{id}")]
@@ -67,25 +56,13 @@ namespace ucubot.Controllers
                     Console.WriteLine(e.ToString());
                 }
                 
-                var command = new MySqlCommand("SELECT * FROM lesson_signal LEFT JOIN student ON lesson_signal.student_id = student.user_id AND id = @id", connection);
-                command.Parameters.AddWithValue("id", id);
-                var adapter = new MySqlDataAdapter(command);
+                string query = "SELECT lesson_signal.id as Id, lesson_signal.time_stamp as Timestamp, " +
+                               "lesson_signal.signal_type as Type, Student.user_id as UserId " +
+                               "FROM lesson_signal LEFT JOIN Student ON lesson_signal.student_id = Student.id where Id = @id";
                 
-                var dataTable = new DataTable();
-                
-                adapter.Fill(dataTable);
-
-                if (dataTable.Rows.Count < 1)
-                    return null;
-                
-                var row = dataTable.Rows[0];
-                var sgnl = new LessonSignalDto
-                {
-                    Timestamp = (DateTime) row["timestamp_"],
-                    Type = (LessonSignalType) row["signal_type"],
-                    UserId = (string) row["user_id"]
-                };
-                return sgnl;
+                var newCommand = new MySqlCommand(query).Parameters.AddWithValue("id", id);
+                var lsnSign = connection.Query<LessonSignalDto>(newCommand.ToString()).ToList();
+                return lsnSign.First();
             }
         }
         
