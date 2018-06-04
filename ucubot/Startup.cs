@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -12,7 +13,10 @@ using Newtonsoft.Json.Serialization;
 using Ninject;
 using Ninject.Activation;
 using Ninject.Infrastructure.Disposal;
+using ucubot.Controllers;
+using ucubot.DBCode;
 using ucubot.Infrastructure;
+using ucubot.Model;
 
 namespace ucubot
 {
@@ -58,6 +62,8 @@ namespace ucubot
 //            services.AddCustomControllerActivation(Resolve);
 //            services.AddCustomViewComponentActivation(Resolve);
             services.AddSingleton<IConfiguration>(f => Configuration);
+            services.AddSingleton<IStudentRepository, ClassStudent>();
+            services.AddSingleton<ILessonRepository, ClassLesson>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
