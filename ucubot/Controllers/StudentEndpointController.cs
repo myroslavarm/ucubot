@@ -1,14 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using System;
 using Microsoft.Extensions.Configuration;
-using MySql.Data.MySqlClient;
-using ucubot.Model;
 using Dapper;
+using System.Threading.Tasks;
+using System.Linq;
+using System.Collections.Generic;
+using ucubot.Model;
+using MySql.Data.MySqlClient;
+using Microsoft.AspNetCore.Mvc;
+using System.Data;
 
 namespace ucubot.Controllers
 {
@@ -16,7 +15,6 @@ namespace ucubot.Controllers
     public class StudentEndpointController : Controller
     {
         private readonly IConfiguration _configuration;
-
         public StudentEndpointController(IConfiguration configuration)
         {
             _configuration = configuration;
@@ -26,9 +24,7 @@ namespace ucubot.Controllers
         public IEnumerable<Student> ShowStudents()
         {
             var connectionString = _configuration.GetConnectionString("BotDatabase");
-            string query = "SELECT Student.id as Id, Student.first_name as FirstName, " +
-                           "Student.last_name as LastName, Student.user_id as UserId FROM Student;";
-            
+
             using (var connection = new MySqlConnection(connectionString)){
                 try{
                     connection.Open();
@@ -37,11 +33,13 @@ namespace ucubot.Controllers
                     Console.WriteLine(e.ToString());
                 }
 
+                string query = "SELECT id as Id, first_name as FirstName, " +
+                           "last_name as LastName, user_id as UserId FROM student";
                 var stdnt = connection.Query<Student>(query).ToList();
                 return stdnt;
             }
-        }
-        
+          }
+
         [HttpGet("{id}")]
         public Student ShowStudent(long id)
         {
@@ -53,52 +51,91 @@ namespace ucubot.Controllers
                 catch (Exception e){
                     Console.WriteLine(e.ToString());
                 }
-                
-                string query = "SELECT Student.id as Id, Student.first_name as FirstName, " +
-				"Student.last_name as LastName, Student.user_id as UserId FROM Student WHERE Id = @id";
-                
-                var newCommand = new MySqlCommand(query).Parameters.AddWithValue("id", id);
-                var stdnt = connection.Query<Student>(newCommand.ToString()).ToList();
-                return stdnt.First();
+
+                string query = "SELECT id as Id, first_name as FirstName, " +
+				"last_name as LastName, user_id as UserId FROM student WHERE Id='"+id+"'";
+
+                var stdnt = connection.Query<Student>(query, new {Id = id}).SingleOrDefault();
+                return stdnt;
             }
-        }
-        
+          }
+
         [HttpPost]
         public async Task<IActionResult> CreateStudent(Student student)
         {
-            var userId = Student.UserId;
-	    var firstName = Student.FirstName;
-	    var lastName = Student.LastName;
+            var userId = student.UserId;
+	          var firstName = student.FirstName;
+	          var lastName = student.LastName;
+
+            using (var connection = new MySqlConnection(_configuration.GetConnectionString("BotDatabase")))
+            {
+                try
+                {
+                    connection.Open();
+                    var cnt = new MySqlCommand("SELECT COUNT(*) FROM student WHERE user_id=@user_id", connection);
+                    cnt.Parameters.AddRange(new[]
+                    {
+                        new MySqlParameter("user_id", userId)
+                    });
+                    if (int.Parse(cnt.ExecuteScalar().ToString()) > 0)
+                    {
+                        connection.Close();
+                        return StatusCode(409);
+                    }
+                    cnt = new MySqlCommand("INSERT INTO student (user_id, first_name, last_name) " +
+                                      "VALUES (@UserId, @FirstName, @LastName)", connection);
+                    cnt.Parameters.AddRange(new[]
+                    {
+                        new MySqlParameter("UserId", userId),
+                        new MySqlParameter("FirstName", firstName),
+    		            new MySqlParameter("LastName", lastName)
+                    });
+                    cnt.ExecuteNonQuery();
+                }
+                catch (Exception e)
+                {
+                    connection.Close();
+                    return StatusCode(409);
+                }
+            connection.Close();
+            return Accepted();
+          }
+        }
+
+
+        [HttpPut]
+        public async Task<IActionResult> UpdateStudent(Student student)
+        {
+            var userId = student.UserId;
+            var firstName = student.FirstName;
+            var lastName = student.LastName;
+            var id = student.Id;
 
             using (var connection = new MySqlConnection(_configuration.GetConnectionString("BotDatabase")))
             {
                 try{
                     connection.Open();
+                    var cnt = new MySqlCommand("UPDATE student set user_id=@UserId, first_name=@FirstName, " +
+                                        "last_name=@LastName where id=@Id", connection);
+                    cnt.Parameters.AddRange(new[]
+                    {
+                        new MySqlParameter("UserId", userId),
+                        new MySqlParameter("FirstName", firstName),
+                        new MySqlParameter("LastName", lastName),
+                        new MySqlParameter("Id", id)
+                    });
+                    cnt.ExecuteNonQuery();
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.ToString());
+                    connection.Close();
+                    return StatusCode(409);
                 }
-                
-                var command = connection.CreateCommand();
-                var cnt = connection.CreateCommand();
-                cnt.CommandText = "COUNT(*) FROM student WHERE user_id=" + userId + ";";
-                if(cnt.ExecuteNonQuery()==0){
-                    return BadRequest();
-                }
-                command.CommandText =
-                    "INSERT INTO student (id, first_name, last_name) VALUES (@Id, @FirstName, @LastName);";
-                command.Parameters.AddRange(new[]
-                {
-                    new MySqlParameter("userId", userId),
-                    new MySqlParameter("firstName", firstName),
-		    new MySqlParameter("lastName", lastName)
-                });
-                command.ExecuteNonQuery();
+                connection.Close();
+                return Accepted();
             }
-            return Accepted();
         }
-        
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveStudent(long id)
         {
@@ -106,19 +143,19 @@ namespace ucubot.Controllers
             {
                 try{
                     connection.Open();
+                    var cnt = new MySqlCommand("DELETE FROM student WHERE id = @id", connection);
+                    cnt.Parameters.Add(new MySqlParameter("id", id));
+                    cnt.ExecuteNonQuery();
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.ToString());
+                    connection.Close();
+                    return StatusCode(409);
                 }
-                
-                var command = connection.CreateCommand();
-                command.CommandText =
-                    "DELETE FROM Student WHERE ID = @id;";
-                command.Parameters.Add(new MySqlParameter("id", id));
-                command.ExecuteNonQuery();
+
+                connection.Close();
+                return Accepted();
             }
-            return Accepted();
         }
     }
 }
