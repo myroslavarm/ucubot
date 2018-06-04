@@ -1,11 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-using Dapper;
+using System.ComponentModel;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Ninject.Infrastructure.Language;
 using MySql.Data.MySqlClient;
 using ucubot.Model;
+using Dapper;
 
 namespace ucubot.DBCode
 {
@@ -32,8 +36,8 @@ namespace ucubot.DBCode
         {
             var connection = this.openConnection(conStr);
             string query = "SELECT lesson_signal.id as Id, lesson_signal.time_stamp as Timestamp, " +
-                           "lesson_signal.signal_type as Type, Student.user_id as UserId " +
-                           "FROM lesson_signal LEFT JOIN Student ON lesson_signal.student_id = Student.id;";
+                           "lesson_signal.signal_type as Type, student.user_id as UserId " +
+                           "FROM lesson_signal LEFT JOIN Student ON lesson_signal.student_id = student.id;";
 
             var lsnSign = connection.Query<LessonSignalDto>(query).ToList();
             return lsnSign;
@@ -43,8 +47,8 @@ namespace ucubot.DBCode
         {
             var connection = this.openConnection(conStr);
             string query = "SELECT lesson_signal.id as Id, lesson_signal.time_stamp as Timestamp, " +
-                           "lesson_signal.signal_type as Type, Student.user_id as UserId " +
-                           "FROM lesson_signal LEFT JOIN Student ON lesson_signal.student_id = Student.id where Id = @id";
+                           "lesson_signal.signal_type as Type, student.user_id as UserId " +
+                           "FROM lesson_signal LEFT JOIN student ON lesson_signal.student_id = student.id where Id = @id";
 
             var newCommand = new MySqlCommand(query).Parameters.AddWithValue("id", id);
             var lsnSign = connection.Query<LessonSignalDto>(newCommand.ToString()).ToList();
@@ -57,19 +61,15 @@ namespace ucubot.DBCode
             var signalType = message.text.ConvertSlackMessageToSignalType();
             var connection = this.openConnection(connStr);
 
-            var command = connection.CreateCommand();
-            var cnt = connection.CreateCommand();
-            cnt.CommandText = "COUNT(*) FROM student WHERE user_id=" + userId + ";";
-            if (cnt.ExecuteNonQuery() == 0)
-            {
-                return 404;
-            }
+            var query = @"SELECT * FROM student WHERE user_id=@id";
+            var cnt = connection.Query<Student>(query, new {id = userId}).SingleOrThrowException(() => { return null; });
 
-            command.CommandText =
-                "INSERT INTO lesson_signal (student_id, signal_type) VALUES (@studentId, @signalType);";
+            if (cnt == null) { return 404; }
+            var command = new MySqlCommand("INSERT INTO lesson_signal (student_id, signal_type) VALUES (@userId, @signalType)",
+                connection);
             command.Parameters.AddRange(new[]
             {
-                new MySqlParameter("studentId", userId),
+                new MySqlParameter("userId", cnt.Id),
                 new MySqlParameter("signalType", signalType)
             });
             command.ExecuteNonQuery();

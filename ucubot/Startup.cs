@@ -17,18 +17,19 @@ using ucubot.Controllers;
 using ucubot.DBCode;
 using ucubot.Infrastructure;
 using ucubot.Model;
+using ucubot.StudentCode;
 
 namespace ucubot
 {
     public class Startup
     {
-        
+
         private readonly AsyncLocal<Scope> scopeProvider = new AsyncLocal<Scope>();
         private IReadOnlyKernel Kernel { get; set; }
 
         private object Resolve(Type type) => Kernel.Get(type);
         private object RequestScope(IContext context) => scopeProvider.Value;
-        
+
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -64,6 +65,7 @@ namespace ucubot
             services.AddSingleton<IConfiguration>(f => Configuration);
             services.AddSingleton<IStudentRepository, ClassStudent>();
             services.AddSingleton<ILessonRepository, ClassLesson>();
+            services.AddSingleton<IStudentSignal, StudentSignalRepo>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -86,7 +88,7 @@ namespace ucubot
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
         }
-        
+
         private IReadOnlyKernel RegisterApplicationComponents(IApplicationBuilder app, ILoggerFactory loggerFactory)
         {
             IKernelConfiguration config = new KernelConfiguration();
@@ -102,10 +104,10 @@ namespace ucubot
 
             return config.BuildReadonlyKernel();
         }
-            
+
         private sealed class Scope : DisposableObject { }
     }
-    
+
     public static class BindingHelpers
     {
         public static void BindToMethod<T>(this IKernelConfiguration config, Func<T> method) => config.Bind<T>().ToMethod(c => method());

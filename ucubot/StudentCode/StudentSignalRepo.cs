@@ -10,9 +10,9 @@ using ucubot.Model;
 
 namespace ucubot.StudentCode
 {
-    public class StudentSignal
+    public class StudentSignalRepo : IStudentSignal
     {
-        IEnumerable<StudentSignal> getStudentSignals(string conStr)
+        public IEnumerable<StudentSignal> getStudentSignals(string conStr)
         {
             using (var connection = new MySqlConnection(conStr))
             {
@@ -25,8 +25,9 @@ namespace ucubot.StudentCode
                     Console.WriteLine(e.ToString());
                 }
 
-                string query = "SELECT id as Id, first_name as FirstName, " +
-                               "last_name as LastName, user_id as UserId FROM student";
+                string query = "SELECT student_signals.first_name first_name, " +
+                  "student_signals.second_name LastName, student_signals.signal_type " +
+                  "SignalType, student_signals.count Count FROM student_signals";
                 var stdnt = connection.Query<StudentSignal>(query).ToList();
                 return stdnt;
             }
