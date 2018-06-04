@@ -37,7 +37,7 @@ namespace ucubot.DBCode
             var connection = this.openConnection(conStr);
             string query = "SELECT lesson_signal.id as Id, lesson_signal.time_stamp as Timestamp, " +
                            "lesson_signal.signal_type as Type, student.user_id as UserId " +
-                           "FROM lesson_signal LEFT JOIN Student ON lesson_signal.student_id = student.id;";
+                           "FROM lesson_signal LEFT JOIN student ON lesson_signal.student_id = student.id;";
 
             var lsnSign = connection.Query<LessonSignalDto>(query).ToList();
             return lsnSign;
@@ -48,7 +48,7 @@ namespace ucubot.DBCode
             var connection = this.openConnection(conStr);
             string query = "SELECT lesson_signal.id as Id, lesson_signal.time_stamp as Timestamp, " +
                            "lesson_signal.signal_type as Type, student.user_id as UserId " +
-                           "FROM lesson_signal LEFT JOIN student ON lesson_signal.student_id = student.id where Id = @id";
+                           "FROM lesson_signal LEFT JOIN student ON lesson_signal.student_id = student.id where lesson_signal.id = @id";
 
             var newCommand = new MySqlCommand(query).Parameters.AddWithValue("id", id);
             var lsnSign = connection.Query<LessonSignalDto>(newCommand.ToString()).ToList();

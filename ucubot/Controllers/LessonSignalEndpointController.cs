@@ -31,33 +31,32 @@ namespace ucubot.Controllers
             var connectionString = _configuration.GetConnectionString("BotDatabase");
             return _repository.getLessons(connectionString);
         }
-        
+
         [HttpGet("{id}")]
         public LessonSignalDto ShowSignal(long id)
         {
             var connectionString = _configuration.GetConnectionString("BotDatabase");
             return _repository.getLesson(connectionString, id);
         }
-        
+
         [HttpPost]
         public async Task<IActionResult> CreateSignal(SlackMessage message)
         {
             var connectionString = _configuration.GetConnectionString("BotDatabase");
-            if (_repository.insertLesson(connectionString, message) == 200)
+            if (_repository.insertLesson(connectionString, message) == 404)
             {
-                return Accepted();    
+                return BadRequest();
             }
-
-            return BadRequest();
+            return Accepted();
         }
-        
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveSignal(long id)
         {
             var connectionString = _configuration.GetConnectionString("BotDatabase");
             if (_repository.deleteLesson(connectionString, id) == 200)
             {
-                return Accepted();    
+                return Accepted();
             }
             return BadRequest();
         }
