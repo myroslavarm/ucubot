@@ -7,9 +7,9 @@ namespace ucubot.DBCode
 {
     public interface ILessonRepository
     {
-        IEnumerable<LessonSignalDto> getLessons(string conStr);
-    		LessonSignalDto getLesson(string conStr, long id);
-    		int insertLesson(string connStr, SlackMessage message);
-    		int deleteLesson(string connStr, long id);
+        IEnumerable<LessonSignalDto> getLessons();
+    		LessonSignalDto getLesson(long id);
+    		int insertLesson(SlackMessage message);
+    		int deleteLesson(long id);
     }
 }

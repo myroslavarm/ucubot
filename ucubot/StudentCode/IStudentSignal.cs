@@ -5,6 +5,6 @@ namespace ucubot.StudentCode
 {
     public interface IStudentSignal
     {
-        IEnumerable<StudentSignal> getStudentSignals(string conStr);
+        IEnumerable<StudentSignal> getStudentSignals();
     }
 }

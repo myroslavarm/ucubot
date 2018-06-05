@@ -15,33 +15,28 @@ namespace ucubot.Controllers
     [Route("api/[controller]")]
     public class StudentEndpointController : Controller
     {
-        private readonly IConfiguration _configuration;
         private readonly IStudentRepository _repository;
-        public StudentEndpointController(IConfiguration configuration, IStudentRepository repository)
+        public StudentEndpointController(IStudentRepository repository)
         {
-            _configuration = configuration;
             _repository = repository;
         }
 
         [HttpGet]
         public IEnumerable<Student> ShowStudents()
         {
-            var connectionString = _configuration.GetConnectionString("BotDatabase");
-            return _repository.getStudents(connectionString);
+            return _repository.getStudents();
         }
 
         [HttpGet("{id}")]
         public Student ShowStudent(long id)
         {
-            var connectionString = _configuration.GetConnectionString("BotDatabase");
-            return _repository.getStudent(connectionString, id);
+            return _repository.getStudent(id);
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateStudent(Student student)
         {
-            var connectionString = _configuration.GetConnectionString("BotDatabase");
-            if(_repository.insertStudent(connectionString, student) == 200)
+            if(_repository.insertStudent(student) == 200)
             {
                 return Accepted();
             }
@@ -52,8 +47,7 @@ namespace ucubot.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateStudent(Student student)
         {
-            var connectionString = _configuration.GetConnectionString("BotDatabase");
-            if (_repository.updStudent(connectionString, student) == 200)
+            if (_repository.updStudent(student) == 200)
             {
                 return Accepted();
             }
@@ -63,8 +57,7 @@ namespace ucubot.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveStudent(long id)
         {
-            var connectionString = _configuration.GetConnectionString("BotDatabase");
-            if (_repository.deleteStudent(connectionString, id) == 200)
+            if (_repository.deleteStudent(id) == 200)
             {
                 return Accepted();
             }

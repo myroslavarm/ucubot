@@ -16,34 +16,29 @@ namespace ucubot.Controllers
     [Route("api/[controller]")]
     public class LessonSignalEndpointController : Controller
     {
-        private readonly IConfiguration _configuration;
         private readonly ILessonRepository _repository;
 
-        public LessonSignalEndpointController(IConfiguration configuration, ILessonRepository repository)
+        public LessonSignalEndpointController(ILessonRepository repository)
         {
-            _configuration = configuration;
             _repository = repository;
         }
 
         [HttpGet]
         public IEnumerable<LessonSignalDto> ShowSignals()
         {
-            var connectionString = _configuration.GetConnectionString("BotDatabase");
-            return _repository.getLessons(connectionString);
+            return _repository.getLessons();
         }
 
         [HttpGet("{id}")]
         public LessonSignalDto ShowSignal(long id)
         {
-            var connectionString = _configuration.GetConnectionString("BotDatabase");
-            return _repository.getLesson(connectionString, id);
+            return _repository.getLesson(id);
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateSignal(SlackMessage message)
         {
-            var connectionString = _configuration.GetConnectionString("BotDatabase");
-            if (_repository.insertLesson(connectionString, message) == 404)
+            if (_repository.insertLesson(message) == 404)
             {
                 return BadRequest();
             }
@@ -53,8 +48,7 @@ namespace ucubot.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveSignal(long id)
         {
-            var connectionString = _configuration.GetConnectionString("BotDatabase");
-            if (_repository.deleteLesson(connectionString, id) == 200)
+            if (_repository.deleteLesson(id) == 200)
             {
                 return Accepted();
             }

@@ -7,14 +7,21 @@ using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
 using ucubot.DBCode;
 using ucubot.Model;
+using ucubot.Controllers;
 
 namespace ucubot.StudentCode
 {
     public class StudentSignalRepo : IStudentSignal
     {
-        public IEnumerable<StudentSignal> getStudentSignals(string conStr)
+        private readonly IConfiguration _configuration;
+
+        public StudentSignalRepo(IConfiguration configuration)
         {
-            using (var connection = new MySqlConnection(conStr))
+            _configuration = configuration;
+        }
+        public IEnumerable<StudentSignal> getStudentSignals()
+        {
+            using (var connection = new MySqlConnection(_configuration.GetConnectionString("BotDatabase")))
             {
                 try
                 {
