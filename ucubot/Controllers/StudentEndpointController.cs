@@ -36,32 +36,32 @@ namespace ucubot.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateStudent(Student student)
         {
-            if(_repository.insertStudent(student) == 200)
+            if(_repository.insertStudent(student) == 409)
             {
-                return Accepted();
+                return StatusCode(409);
             }
-            return StatusCode(409);
+            return Accepted();
         }
 
 
         [HttpPut]
         public async Task<IActionResult> UpdateStudent(Student student)
         {
-            if (_repository.updStudent(student) == 200)
+            if (_repository.updStudent(student) == 409)
             {
-                return Accepted();
+                return StatusCode(409);
             }
-            return StatusCode(409);
+            return Accepted();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveStudent(long id)
         {
-            if (_repository.deleteStudent(id) == 200)
+            if (_repository.deleteStudent(id) == 409)
             {
-                return Accepted();
+                return StatusCode(409);
             }
-            return StatusCode(409);
+            return Accepted();
         }
     }
 }

@@ -59,9 +59,8 @@ namespace ucubot.DBCode
                                "lesson_signal.signal_type as Type, student.user_id as UserId " +
                                "FROM lesson_signal LEFT JOIN student ON lesson_signal.student_id = student.id where lesson_signal.id = @id";
 
-                var newCommand = new MySqlCommand(query).Parameters.AddWithValue("id", id);
-                var lsnSign = connection.Query<LessonSignalDto>(newCommand.ToString()).ToList();
-                return lsnSign.First();
+                var lsnSign = connection.Query<LessonSignalDto>(query, new {Id = id}).SingleOrDefault();
+                return lsnSign;
           }
         }
 

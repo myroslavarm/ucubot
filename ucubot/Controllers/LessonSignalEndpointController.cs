@@ -48,11 +48,11 @@ namespace ucubot.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveSignal(long id)
         {
-            if (_repository.deleteLesson(id) == 200)
+            if (_repository.deleteLesson(id) == 404)
             {
-                return Accepted();
+                return BadRequest();
             }
-            return BadRequest();
+            return Accepted();
         }
     }
 }
